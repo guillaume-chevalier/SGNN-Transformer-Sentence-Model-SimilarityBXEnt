@@ -3,30 +3,30 @@
 #
 # # Self Governing Neural Network (SGNN): the Projection Layer
 #
-# This file is derived from the following file: 
+# This file is derived from the following file:
 #     https://github.com/guillaume-chevalier/SGNN-Self-Governing-Neural-Networks-Projection-Layer
 #
 # ## License:
-# 
+#
 # BSD 3-Clause License
-# 
+#
 # Copyright (c) 2018, Guillaume Chevalier
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
-# 
+#
 # * Redistributions of source code must retain the above copyright notice, this
 #   list of conditions and the following disclaimer.
-# 
+#
 # * Redistributions in binary form must reproduce the above copyright notice,
 #   this list of conditions and the following disclaimer in the documentation
 #   and/or other materials provided with the distribution.
-# 
+#
 # * Neither the name of the copyright holder nor the names of its
 #   contributors may be used to endorse or promote products derived from
 #   this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -140,6 +140,9 @@ hashing_feature_union_params = {
        for t in range(T)
     },
     **{'union__sparse_random_projection_hasher_{}__dense_output'.format(t): False  # only AFTER hashing.
+       for t in range(T)
+    },
+    **{'union__sparse_random_projection_hasher_{}__random_state'.format(t): 7 + t**2 + t  # different predetermined random state per hasher.
        for t in range(T)
     }
 }
