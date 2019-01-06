@@ -38,48 +38,15 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-import numpy as np
-import sklearn
+
+
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.random_projection import SparseRandomProjection
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.metrics.pairwise import cosine_similarity
 import scipy.sparse as sp
 
-from collections import Counter
-from pprint import pprint
-
-
-class SentenceTokenizer(BaseEstimator, TransformerMixin):
-    # char lengths:
-    MINIMUM_SENTENCE_LENGTH = 10
-    MAXIMUM_SENTENCE_LENGTH = 200
-
-    def fit(self, X, y=None):
-        return self
-
-    def transform(self, X):
-        return self._split(X)
-
-    def _split(self, string_):
-        splitted_string = []
-
-        sep = chr(29)  # special separator character to split sentences or phrases.
-        string_ = string_.strip().replace(".", "." + sep).replace("?", "?" + sep).replace("!", "!" + sep).replace(";", ";" + sep).replace("\n", "\n" + sep)
-        for phrase in string_.split(sep):
-            phrase = phrase.strip()
-
-            while len(phrase) > SentenceTokenizer.MAXIMUM_SENTENCE_LENGTH:
-                # clip too long sentences.
-                sub_phrase = phrase[:SentenceTokenizer.MAXIMUM_SENTENCE_LENGTH].lstrip()
-                splitted_string.append(sub_phrase)
-                phrase = phrase[SentenceTokenizer.MAXIMUM_SENTENCE_LENGTH:].rstrip()
-
-            if len(phrase) >= SentenceTokenizer.MINIMUM_SENTENCE_LENGTH:
-                splitted_string.append(phrase)
-
-        return splitted_string
+from src.data.training_data import SentenceTokenizer
 
 
 class WordTokenizer(BaseEstimator, TransformerMixin):
@@ -93,7 +60,8 @@ class WordTokenizer(BaseEstimator, TransformerMixin):
         out = [
             [
                 begin_of_word + word + end_of_word
-                for word in sentence.replace("//", " /").replace("/", " /").replace("-", " -").replace("  ", " ").split(" ")
+                for word in
+                sentence.replace("//", " /").replace("/", " /").replace("-", " -").replace("  ", " ").split(" ")
                 if not len(word) == 0
             ]
             for sentence in X
@@ -138,20 +106,23 @@ hashing_feature_union_params = {
     # T=80 projections for each of dimension d=14: 80 * 14 = 1120-dimensionnal word projections.
     **{'union__sparse_random_projection_hasher_{}__n_components'.format(t): d
        for t in range(T)
-    },
+       },
     **{'union__sparse_random_projection_hasher_{}__dense_output'.format(t): False  # only AFTER hashing.
        for t in range(T)
-    },
-    **{'union__sparse_random_projection_hasher_{}__random_state'.format(t): 7 + t**2 + t  # different predetermined random state per hasher.
+       },
+    **{'union__sparse_random_projection_hasher_{}__random_state'.format(t): 7 + t ** 2 + t
+       # different predetermined random state per hasher.
        for t in range(T)
-    }
+       }
+    # TODO: n-jobs at, see: https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.FeatureUnion.html
 }
+
 
 class FeatureUnion3D(FeatureUnion):
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, **fit_params):
         X_flattened_2D = sp.vstack(X, format='csr')
-        super(FeatureUnion3D, self).fit(X_flattened_2D, y)
+        super(FeatureUnion3D, self).fit(X_flattened_2D, y, **fit_params)
         return self
 
     def transform(self, X):
@@ -160,8 +131,8 @@ class FeatureUnion3D(FeatureUnion):
             for x_2D in X
         ]
 
-    def fit_transform(self, X, y=None):
-        return self.fit(X, y).transform(X)
+    def fit_transform(self, X, y=None, **fit_params):
+        return self.fit(X, y, **fit_params).transform(X)
 
 
 def get_sgnn_projection_pipeline(T=80, d=14, sgnn_training_data=None):
@@ -180,7 +151,8 @@ def get_sgnn_projection_pipeline(T=80, d=14, sgnn_training_data=None):
     pipeline.set_params(**params)
 
     if sgnn_training_data is None:
-        with open("./data/How-to-Grow-Neat-Software-Architecture-out-of-Jupyter-Notebooks.md") as f:
+        print("Warning: you may want to pass in more data to the function `get_sgnn_projection_pipeline()`")
+        with open("./src/data/How-to-Grow-Neat-Software-Architecture-out-of-Jupyter-Notebooks.md") as f:
             raw_data = f.read()
         sgnn_training_data = SentenceTokenizer().fit_transform(raw_data)
 
