@@ -147,20 +147,21 @@ class DataBatchIterator:
     def get_batch(self):
 
         batch_word_projections = []  # self.next_yielder(0)
-        # batch_word_projections = batch_src[:int(self.batch_size/2)]  # safe guard not to impede learning with low batch size
+        category_per_sentence = []
         ii = 0
         while len(batch_word_projections) <= self.batch_size:
             new_batch = self.next_yielder(ii)
-            batch_word_projections += list(new_batch)
-            # batch_word_projections.append(0)
-            # print(len(batch_word_projections))
+            new_batch_list = list(new_batch)
+            batch_word_projections += new_batch_list
+            category_per_sentence += [ii] * len(new_batch_list)
             ii += 1
 
         batch_word_projections = batch_word_projections[:self.batch_size]
+        category_per_sentence = category_per_sentence[:self.batch_size]
         batch_word_projections, mask = pad_right(
             batch_word_projections, max_words_per_sentence=self.max_words_per_sentence)
 
-        return batch_word_projections, mask
+        return batch_word_projections, mask, category_per_sentence
 
     def next_yielder(self, i):
         if len(self.yielders) <= i:

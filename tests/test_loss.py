@@ -9,11 +9,11 @@ from src.model.loss import categories_to_block_matrix, TrainerModel
 
 
 def test_categories_to_block_matrix():
-    category_per_word = [0, 0, 1, 1, 2]
+    category_per_sentence = [0, 0, 1, 1, 2]
 
-    target = categories_to_block_matrix(category_per_word)
+    target = categories_to_block_matrix(category_per_sentence)
 
-    assert target.shape == (len(category_per_word), len(category_per_word))
+    assert target.shape == (len(category_per_sentence), len(category_per_sentence))
     assert (target.data.numpy() == np.array([
         [1., 1., 0., 0., 0.],
         [1., 1., 0., 0., 0.],
@@ -25,13 +25,13 @@ def test_categories_to_block_matrix():
 
 def test_trainer_model_works():
     raw_data = "This is a sentence. And this is another one. This test needs sentences as such"
-    category_per_word = [0, 1, 3]
-    preproc_sgnn_pipeline = preproc_sgnn_sklearn_pipeline = get_sgnn_projection_pipeline(sgnn_training_data=raw_data)
+    category_per_sentence = [0, 1, 3]
+    preproc_sgnn_sklearn_pipeline = get_sgnn_projection_pipeline(sgnn_training_data=raw_data)
     sentence_projection_model = make_sentence_model(d_ff=1024)
     list_of_sentences = raw_data.split(". ")
-    projected_words = preproc_sgnn_pipeline.transform(list_of_sentences)
+    projected_words = preproc_sgnn_sklearn_pipeline.transform(list_of_sentences)
     projected_words, mask = pad_right(projected_words)
-    target_diagonal_block_matrix = categories_to_block_matrix(category_per_word)
+    target_diagonal_block_matrix = categories_to_block_matrix(category_per_sentence)
 
     model = TrainerModel(sentence_projection_model)
 
@@ -44,15 +44,15 @@ def test_trainer_model_works_on_gpu():
     torch.cuda.set_device(device_id)
     with torch.cuda.device(device_id) as cuda:
         raw_data = "This is a sentence. And this is another one. This test needs sentences as such"
-        category_per_word = [0, 1, 3]
-        preproc_sgnn_pipeline = preproc_sgnn_sklearn_pipeline = get_sgnn_projection_pipeline(
+        category_per_sentence = [0, 1, 3]
+        preproc_sgnn_sklearn_pipeline = get_sgnn_projection_pipeline(
             sgnn_training_data=raw_data)
         sentence_projection_model = make_sentence_model(d_ff=1024).cuda(device_id)
         list_of_sentences = raw_data.split(". ")
-        projected_words = preproc_sgnn_pipeline.transform(list_of_sentences)
+        projected_words = preproc_sgnn_sklearn_pipeline.transform(list_of_sentences)
         projected_words, mask = pad_right(projected_words)
         projected_words, mask = projected_words.cuda(device_id), mask.cuda(device_id)
-        target_diagonal_block_matrix = categories_to_block_matrix(category_per_word).cuda(device_id)
+        target_diagonal_block_matrix = categories_to_block_matrix(category_per_sentence).cuda(device_id)
 
         model = TrainerModel(sentence_projection_model).cuda(device_id)
 

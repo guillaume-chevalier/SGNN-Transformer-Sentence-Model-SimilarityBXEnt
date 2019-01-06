@@ -68,14 +68,17 @@ def test_data_batch_iterator():
     sgnn_fit_data = "oiasdjf opiasd fjopias dfijop asdpoi fjakl;jswe fklzjsnd cvoiuasherf iuhans dfkjuans cvpiouha sdifjn asdkfjn"  # TODO.
     sgnn_projection_pipeline = get_sgnn_projection_pipeline(sgnn_training_data=sgnn_fit_data)
     max_iters = 3
-
     epoch = 0
-    for src, mask in DataBatchIterator(sgnn_projection_pipeline, max_iters=max_iters):
+
+    for src, mask, category_per_sentence in DataBatchIterator(sgnn_projection_pipeline, max_iters=max_iters):
+
         assert len(src.shape) == 3
         assert len(mask.shape) == 3
+        assert len(category_per_sentence) == len(src)
+        assert category_per_sentence == list(sorted(category_per_sentence))
         epoch += 1
     assert epoch == 3
 
 
 if __name__ == '__main__':
-    pytest.main()
+    pytest.main([__file__])

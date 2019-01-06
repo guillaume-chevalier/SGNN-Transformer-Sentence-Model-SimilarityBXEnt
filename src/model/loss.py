@@ -66,13 +66,13 @@ def normalize_last_dim(tensor, eps=1e-6):
     return tensor
 
 
-def categories_to_block_matrix(category_per_word):
+def categories_to_block_matrix(category_per_sentence):
     """
     Create a block matrix where each block entry is 1 and everything else is 0.
     Imagine this but where each block has value 1.0: https://i.ytimg.com/vi/a60r50XvtVo/maxresdefault.jpg
 
     Example input:
-        category_per_word = [0, 0, 1, 1, 1, 2]  # categories' id must be sorted like this
+        category_per_sentence = [0, 0, 1, 1, 1, 2]  # categories' id must be sorted like this
     Example output for this input:
         tensor([[1., 1., 0., 0., 0., 0.],
                 [1., 1., 0., 0., 0., 0.],
@@ -81,16 +81,16 @@ def categories_to_block_matrix(category_per_word):
                 [0., 0., 1., 1., 1., 0.],
                 [0., 0., 0., 0., 0., 1.]])
 
-    :param category_per_word: the list of categories id of each example. If counting occurences, we get the length of each block.
-    :return: the corresponding block matrix, of shape [len(category_per_word), len(category_per_word)].
+    :param category_per_sentence: the list of categories id of each example. If counting occurences, we get the length of each block.
+    :return: the corresponding block matrix, of shape [len(category_per_sentence), len(category_per_sentence)].
     """
-    tmp = list(sorted(category_per_word))
-    assert (tmp == category_per_word), "Categories must be in sorted order (increasing category id)"
-    category_per_word = tmp
-    size = len(category_per_word)
+    tmp = list(sorted(category_per_sentence))
+    assert (tmp == category_per_sentence), "Categories must be in sorted order (increasing category id)"
+    category_per_sentence = tmp
+    size = len(category_per_sentence)
     block_matrix = torch.zeros((size, size))
 
-    c = Counter(category_per_word)
+    c = Counter(category_per_sentence)
     block_sizes = [val for key, val in sorted(list(c.items()))]
     a = 0
     for size in block_sizes:
