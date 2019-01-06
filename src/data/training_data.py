@@ -106,7 +106,7 @@ def pad_right(projections, max_words_per_sentence=50):
     """
     :param projections: a list of 2D np.arrays of shape [nb_sentences, [sentence_length, d_model]].
 
-    :return: A Torch FloatTensor of shape [nb_sentences, max(sentence_length), d_model] concatenated and 0-padded to its right (far-end indices of value 0) on dim 1, and the mask of shape [nb_sentences, 1, max(sentence_length)] for that filled with zeros and ones.
+    :return: A Torch tensor of shape [nb_sentences, max(sentence_length), d_model] concatenated and 0-padded to its right (far-end indices of value 0) on dim 1, and the mask of shape [nb_sentences, 1, max(sentence_length)] for that filled with zeros and ones.
     """
     sizes = [proj.shape[0] for proj in projections]
     max_dim_1 = min(max(sizes), max_words_per_sentence)

@@ -102,10 +102,8 @@ def categories_to_block_matrix(category_per_word):
 
 
 def loss_block_matrix_xent(prediction, target):
-    # def cosine_sim_to_xent_valrange(predicted_cosine_sims):
-    # """Remap -1 to 1 range to a 0 to 1 range."""
-    #     return predicted_cosine_sims / 2.0 + 0.5
-    # return F.binary_cross_entropy(cosine_sim_to_xent_valrange(prediction), target, reduce=False).mean()
+    prediction = prediction / 2.0 + 0.5
+    prediction = prediction.clamp(0, 1)
     return F.binary_cross_entropy(prediction, target, reduce=False).mean()
 
 
@@ -115,10 +113,10 @@ class TrainerModel(torch.nn.Module):
     def __init__(self, sentence_projection_model):
         super(TrainerModel, self).__init__()
         self.sentence_projection_model = sentence_projection_model
+        self.add_module("sentence_projection_model", sentence_projection_model)
 
-    def __call__(self, x, mask, category_per_word):
+    def __call__(self, x, mask, target_diagonal_block_matrix):
         sentence_projection = self.sentence_projection_model(x, mask)
         prediction = matching_network_self_attention(sentence_projection)
-        target = categories_to_block_matrix(category_per_word)
-        loss = loss_block_matrix_xent(prediction, target)
+        loss = loss_block_matrix_xent(prediction, target_diagonal_block_matrix)
         return loss

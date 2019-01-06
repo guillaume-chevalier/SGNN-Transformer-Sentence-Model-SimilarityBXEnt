@@ -82,9 +82,13 @@ class ProjectEncode(nn.Module):
         super(ProjectEncode, self).__init__()
         self.sgnn_projector = sgnn_projector
         self.encoder = encoder
+        self.add_module("sgnn_projector", sgnn_projector)
+        self.add_module("encoder", encoder)
 
     def forward(self, x, mask):
         "Take in and process sequences, using word projector and encoder."
+        # x = x  # .cuda(0)
+        # mask = mask  # .cuda(0)
         x_projected = self.sgnn_projector(x)
         return self.encoder(x_projected, mask)
 
@@ -97,6 +101,9 @@ class Encoder(nn.Module):
         self.layers = clones(layer, N_encoder_layers)
         self.norm = LayerNorm(layer.size)
         self.linear = nn.Linear(d_model, d_model)
+        self.add_module("layers", self.layers)
+        self.add_module("norm", self.norm)
+        self.add_module("linear", self.linear)
 
     def forward(self, x, mask):
         "Pass the input (and mask) through each layer in turn."
@@ -149,6 +156,9 @@ class EncoderLayer(nn.Module):
         self.feed_forward = feed_forward
         self.sublayer = clones(SublayerConnection(size), 2)
         self.size = size
+        self.add_module("self_attn", self.self_attn)
+        self.add_module("feed_forward", self.feed_forward)
+        self.add_module("sublayer", self.sublayer)
 
     def forward(self, x, mask):
         "Follow Figure 1 (left) for connections."
@@ -165,6 +175,7 @@ class SublayerConnection(nn.Module):
     def __init__(self, size):
         super(SublayerConnection, self).__init__()
         self.norm = LayerNorm(size)
+        self.add_module("norm", self.norm)
 
     def forward(self, x, sublayer):
         "Apply residual connection to any sublayer with the same size."
@@ -178,9 +189,10 @@ class MultiHeadedAttention(nn.Module):
         assert d_model % h == 0
         # We assume d_v always equals d_k
         self.d_k = d_model // h
-        self.h = h
+        self.h = int(h)
         self.linears = clones(nn.Linear(d_model, d_model), 4)
         self.attn = None
+        self.add_module("linears", self.linears)
 
     def forward(self, query, key, value, mask):
         if mask is not None:
@@ -207,6 +219,7 @@ def attention(query, key, value, mask=None):
     d_k = query.size(-1)
     scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(d_k)
     if mask is not None:
+        # mask = mask.cuda(0)
         scores = scores.masked_fill(mask == 0, -1e9)
     p_attn = F.softmax(scores, dim=-1)
     return torch.matmul(p_attn, value), p_attn
@@ -219,6 +232,8 @@ class PositionwiseFeedForward(nn.Module):
         super(PositionwiseFeedForward, self).__init__()
         self.w_1 = nn.Linear(d_model, d_ff)
         self.w_2 = nn.Linear(d_ff, d_model)
+        self.add_module("w_1", self.w_1)
+        self.add_module("w_2", self.w_2)
 
     def forward(self, x):
         return self.w_2(F.relu(self.w_1(x)))
@@ -236,7 +251,7 @@ class PositionalEncoding(nn.Module):
         div_term = torch.exp(torch.arange(0.0, d_model, 2) * -(math.log(10000.0) / d_model))
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
-        pe = pe.unsqueeze(0)
+        pe = pe.unsqueeze(0)  # .cuda(0)
         self.register_buffer('pe', pe)
 
     def forward(self, x):
@@ -249,9 +264,12 @@ class PositionwiseFeedForwardForWordProjections(nn.Module):
     def __init__(self, d_model, T_sgnn, d_sgnn):
         super(PositionwiseFeedForwardForWordProjections, self).__init__()
         self.d_model = d_model
-        self.w = nn.Linear(T_sgnn * d_sgnn, d_model)
+        self.w = nn.Linear(T_sgnn * d_sgnn, d_model)  # .cuda(0)
+        self.add_module("w", self.w)
 
     def forward(self, x):
+        # x = x.cuda(0)
+        # self.w = self.w.cuda(0)
         h = self.w(x)
         lrelu = F.relu(h) + h / 5.0
         return lrelu

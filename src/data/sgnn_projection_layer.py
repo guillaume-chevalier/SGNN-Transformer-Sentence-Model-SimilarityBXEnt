@@ -38,7 +38,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-
+import string
 
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.pipeline import Pipeline, FeatureUnion
@@ -103,6 +103,7 @@ T = 80
 d = 14
 
 hashing_feature_union_params = {
+    # 'union__n_jobs': -1,  # use all processors
     # T=80 projections for each of dimension d=14: 80 * 14 = 1120-dimensionnal word projections.
     **{'union__sparse_random_projection_hasher_{}__n_components'.format(t): d
        for t in range(T)
@@ -114,7 +115,6 @@ hashing_feature_union_params = {
        # different predetermined random state per hasher.
        for t in range(T)
        }
-    # TODO: n-jobs at, see: https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.FeatureUnion.html
 }
 
 
@@ -135,6 +135,22 @@ class FeatureUnion3D(FeatureUnion):
         return self.fit(X, y, **fit_params).transform(X)
 
 
+def generate_a_few_char_n_grams():
+    all_possible_0_to_3_grams = ["\n"]
+    less_printable = list(set(string.printable) - set(string.digits) - {" "})
+    for a in less_printable:
+        all_possible_0_to_3_grams.append(a)
+        for b in less_printable:
+            all_possible_0_to_3_grams.append(a + b)
+            for c in string.ascii_lowercase:
+                all_possible_0_to_3_grams.append(a + c + b)
+    for a in string.digits:
+        all_possible_0_to_3_grams.append(a)
+        for b in string.digits:
+            all_possible_0_to_3_grams.append(a + b)
+    return all_possible_0_to_3_grams
+
+
 def get_sgnn_projection_pipeline(T=80, d=14, sgnn_training_data=None):
     params = dict()
     params.update(char_term_frequency_params)
@@ -151,10 +167,11 @@ def get_sgnn_projection_pipeline(T=80, d=14, sgnn_training_data=None):
     pipeline.set_params(**params)
 
     if sgnn_training_data is None:
-        print("Warning: you may want to pass in more data to the function `get_sgnn_projection_pipeline()`")
+        # print("Warning: you may want to pass in more data to the function `get_sgnn_projection_pipeline()`")
         with open("./src/data/How-to-Grow-Neat-Software-Architecture-out-of-Jupyter-Notebooks.md") as f:
             raw_data = f.read()
-        sgnn_training_data = SentenceTokenizer().fit_transform(raw_data)
+        all_possible_0_to_2_grams = " ".join(generate_a_few_char_n_grams())
+        sgnn_training_data = SentenceTokenizer().fit_transform(raw_data + all_possible_0_to_2_grams)
 
     pipeline.fit(sgnn_training_data)
 
