@@ -1,4 +1,4 @@
-import traceback
+import datetime
 import os
 import glob
 
@@ -17,7 +17,10 @@ def save_model(preproc_sgnn_sklearn_pipeline, sentence_projection_model, model_n
     dump(preproc_sgnn_sklearn_pipeline, a)
     with open(b, "wb") as f:
         torch.save(sentence_projection_model, f=f)
-    print("Saved model to files:", a, b)
+    print(
+        datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        " - Saved model to files:", a, b
+    )
 
 
 def load_model(model_name=MY_MODEL_NAME, cuda_device_id=None):

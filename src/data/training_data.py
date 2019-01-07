@@ -170,7 +170,6 @@ class DataBatchIterator:
 
     def yield_paragraphs(self):
         with FilesReaderBinaryUTF8(UTF8_TXT_RAW_FILES, pick_files_in_random_order=True, verbose=False) as f:
-            # TODO: verbose...
             while True:
                 raw_data = f.next_paragraph()
                 sentences_data = SentenceTokenizer().fit_transform(raw_data)

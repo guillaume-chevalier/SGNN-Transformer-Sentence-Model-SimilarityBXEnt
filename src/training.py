@@ -118,7 +118,7 @@ def run_epoch(epoch, model_trainer, model_opt, data_batch_iterator, cuda_device_
     total_tokens = 0
     total_loss = 0
     mod_tokens = 0
-    mod = 240
+    mod = 1  # TODO
 
     for i, (src, mask, category_per_sentence) in enumerate(data_batch_iterator):
         target_diagonal_block_matrix = categories_to_block_matrix(category_per_sentence)
@@ -152,16 +152,16 @@ def run_epoch(epoch, model_trainer, model_opt, data_batch_iterator, cuda_device_
 
 
 def train_model_on_data(
-        max_epoch, train_iters_per_epoch,
+        max_epoch, train_iters_per_epoch, batch_size,
         epoch_model_name,
         preproc_sgnn_sklearn_pipeline=None,
         model_trainer=None,
         cuda_device_id=None,
         plot=True):
     # TODO: clean params.
-    # batch_size = 1200
-    # train_iters_per_epoch = 40
-    # test_iters_per_epoch = 1
+    # batch_size = 128
+    # train_iters_per_epoch = 24
+    # test_iters_per_epoch = 2400
     # max_epoch = 10
     # cuda_device_id = 0  # None for CPU, 0 for first GPU, etc.
 
@@ -204,14 +204,14 @@ def train_model_on_data(
         model_trainer.train()
         run_epoch(
             epoch, model_trainer, model_opt,
-            DataBatchIterator(preproc_sgnn_sklearn_pipeline, max_iters=train_iters_per_epoch),
+            DataBatchIterator(preproc_sgnn_sklearn_pipeline, max_iters=train_iters_per_epoch, batch_size=batch_size),
             cuda_device_id
         )
 
         model_trainer.eval()
         run_epoch(
             epoch, model_trainer, model_opt,
-            DataBatchIterator(preproc_sgnn_sklearn_pipeline, max_iters=1),
+            DataBatchIterator(preproc_sgnn_sklearn_pipeline, max_iters=1, batch_size=batch_size),
             cuda_device_id
         )
         this_epoch_model_name = epoch_model_name.format("{}", str(epoch).rjust(5, "0"))

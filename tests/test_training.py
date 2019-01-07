@@ -16,7 +16,7 @@ def test_can_train_one_epoch_of_one_step():
     success = False
     try:
         preproc_sgnn_sklearn_pipeline, model_trainer = train_model_on_data(
-            max_epoch, train_iters_per_epoch,
+            max_epoch, train_iters_per_epoch, batch_size,
             preproc_sgnn_sklearn_pipeline=None,
             model_trainer=None,
             cuda_device_id=cuda_device_id,
@@ -43,7 +43,7 @@ def test_can_train_one_epoch_of_one_step_on_GPU():
     success = False
     try:
         preproc_sgnn_sklearn_pipeline, model_trainer = train_model_on_data(
-            max_epoch, train_iters_per_epoch,
+            max_epoch, train_iters_per_epoch, batch_size,
             preproc_sgnn_sklearn_pipeline=None,
             model_trainer=None,
             cuda_device_id=cuda_device_id,
