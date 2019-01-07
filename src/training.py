@@ -1,23 +1,78 @@
-from src.data.read_txt import *
-from src.data.config import *
-from src.data.training_data import *
-from src.data.sgnn_projection_layer import *
-from src.model.loss import *
-from src.model.save_load_model import MY_MODEL_NAME, save_model
-from src.model.transformer import *
+# coding: utf-8
 
-from sklearn.metrics import jaccard_similarity_score, f1_score, accuracy_score
-import matplotlib.pyplot as plt
-import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch.autograd import Variable
+#
+# # The annotated transformer
+#
+# This file may contain code from: https://github.com/harvardnlp/annotated-transformer
+#
+# ## Original license:
+#
+#     MIT License
+#
+#     Copyright (c) 2018 Alexander Rush
+#
+#     Permission is hereby granted, free of charge, to any person obtaining a copy
+#     of this software and associated documentation files (the "Software"), to deal
+#     in the Software without restriction, including without limitation the rights
+#     to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+#     copies of the Software, and to permit persons to whom the Software is
+#     furnished to do so, subject to the following conditions:
+#
+#     The above copyright notice and this permission notice shall be included in all
+#     copies or substantial portions of the Software.
+#
+#     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#     IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#     AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+#     SOFTWARE.
+#
+# ## New license for the modified work:
+#
+#     BSD 3-Clause License
+#
+#     Copyright (c) 2018, Guillaume Chevalier
+#     All rights reserved.
+#
+#     Redistribution and use in source and binary forms, with or without
+#     modification, are permitted provided that the following conditions are met:
+#
+#     * Redistributions of source code must retain the above copyright notice, this
+#       list of conditions and the following disclaimer.
+#
+#     * Redistributions in binary form must reproduce the above copyright notice,
+#       this list of conditions and the following disclaimer in the documentation
+#       and/or other materials provided with the distribution.
+#
+#     * Neither the name of the copyright holder nor the names of its
+#       contributors may be used to endorse or promote products derived from
+#       this software without specific prior written permission.
+#
+#     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+#     AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#     IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+#     FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#     DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#     SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#     CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+#     OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+#     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
 
-import math
-import copy
+
 import time
-import glob
+
+import matplotlib.pyplot as plt
+from sklearn.metrics import jaccard_similarity_score, f1_score, accuracy_score
+
+from src.data.sgnn_projection_layer import *
+from src.data.training_data import *
+from src.model.loss import *
+from src.model.save_load_model import save_model
+from src.model.transformer import *
 
 
 class NoamOpt:
@@ -63,7 +118,7 @@ def run_epoch(epoch, model_trainer, model_opt, data_batch_iterator, cuda_device_
     total_tokens = 0
     total_loss = 0
     mod_tokens = 0
-    mod = 10
+    mod = 240
 
     for i, (src, mask, category_per_sentence) in enumerate(data_batch_iterator):
         target_diagonal_block_matrix = categories_to_block_matrix(category_per_sentence)
@@ -116,15 +171,13 @@ def train_model_on_data(
         context.__enter__()
 
     # Create model
-    # todo: load or not? bool param.
-    preproc_sgnn_sklearn_pipeline = get_sgnn_projection_pipeline()
-    sentence_projection_model = make_sentence_model()
-    # preproc_sgnn_sklearn_pipeline, sentence_projection_model = load_most_recent_model(MY_MODEL_NAME)
-
-    model_trainer = TrainerModel(sentence_projection_model)
+    if preproc_sgnn_sklearn_pipeline is None:
+        preproc_sgnn_sklearn_pipeline = get_sgnn_projection_pipeline()
+    if model_trainer is None:
+        sentence_projection_model = make_sentence_model()
+        model_trainer = TrainerModel(sentence_projection_model)
     if cuda_device_id is not None:
         model_trainer = model_trainer.cuda(cuda_device_id)
-    model_opt = get_std_opt(model_trainer)
 
     # Define some hand-crafted test data just for visualization purpose.:
     sentences_raw = (
@@ -146,6 +199,7 @@ def train_model_on_data(
             preproc_sgnn_sklearn_pipeline, sentence_projection_model, sentences_raw)
 
     # Train model
+    model_opt = get_std_opt(model_trainer)
     for epoch in range(max_epoch):
         model_trainer.train()
         run_epoch(
@@ -160,8 +214,8 @@ def train_model_on_data(
             DataBatchIterator(preproc_sgnn_sklearn_pipeline, max_iters=1),
             cuda_device_id
         )
-        epoch_model_name = epoch_model_name.format("{}", str(epoch).rjust(5, "0"))
-        save_model(preproc_sgnn_sklearn_pipeline, sentence_projection_model, epoch_model_name)
+        this_epoch_model_name = epoch_model_name.format("{}", str(epoch).rjust(5, "0"))
+        save_model(preproc_sgnn_sklearn_pipeline, sentence_projection_model, this_epoch_model_name)
 
     if plot:
         plot_a_result(
@@ -172,7 +226,7 @@ def train_model_on_data(
     if cuda_device_id is not None:
         context.__exit__()
 
-    return model_trainer
+    return preproc_sgnn_sklearn_pipeline, model_trainer
 
 
 def plot_a_result(category_per_sentence, cuda_device_id, preproc_sgnn_sklearn_pipeline, sentence_projection_model,

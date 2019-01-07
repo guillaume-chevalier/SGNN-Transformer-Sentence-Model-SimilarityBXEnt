@@ -37,7 +37,6 @@ def test_save_load():
     assert success
 
 
-
 if __name__ == '__main__':
     import sys
 

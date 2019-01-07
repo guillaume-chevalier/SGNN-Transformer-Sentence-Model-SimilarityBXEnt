@@ -69,7 +69,7 @@ class WordTokenizer(BaseEstimator, TransformerMixin):
         return out
 
 
-char_ngram_range = (1, 4)
+char_ngram_range = (1, 3)
 
 char_term_frequency_params = {
     'char_term_frequency__analyzer': 'char',
@@ -103,18 +103,9 @@ T = 80
 d = 14
 
 hashing_feature_union_params = {
-    # 'union__n_jobs': -1,  # use all processors
-    # T=80 projections for each of dimension d=14: 80 * 14 = 1120-dimensionnal word projections.
-    **{'union__sparse_random_projection_hasher_{}__n_components'.format(t): d
-       for t in range(T)
-       },
-    **{'union__sparse_random_projection_hasher_{}__dense_output'.format(t): False  # only AFTER hashing.
-       for t in range(T)
-       },
-    **{'union__sparse_random_projection_hasher_{}__random_state'.format(t): 7 + t ** 2 + t
-       # different predetermined random state per hasher.
-       for t in range(T)
-       }
+    'union__sparse_random_projection_hasher__n_components': T * d,
+    'union__sparse_random_projection_hasher__dense_output': False,
+    'union__sparse_random_projection_hasher__random_state': 42
 }
 
 
@@ -154,21 +145,8 @@ def generate_a_few_char_n_grams():
 def get_sgnn_projection_pipeline(T=80, d=14, sgnn_training_data=None):
     params = dict()
     params.update(char_term_frequency_params)
-    # params.update(hashing_feature_union_params)
-    params.update({
-        'union__sparse_random_projection_hasher__n_components': 1120,
-        'union__sparse_random_projection_hasher__dense_output': False,
-        'union__sparse_random_projection_hasher__random_state': 42
-    })
+    params.update(hashing_feature_union_params)
 
-    _ = """pipeline = Pipeline([
-        ("word_tokenizer", WordTokenizer()),
-        ("char_term_frequency", CountVectorizer3D()),
-        ('union', FeatureUnion3D([
-            ('sparse_random_projection_hasher_{}'.format(t), SparseRandomProjection())
-            for t in range(T)
-        ]))
-    ])"""
     pipeline = Pipeline([
         ("word_tokenizer", WordTokenizer()),
         ("char_term_frequency", CountVectorizer3D()),
@@ -180,10 +158,11 @@ def get_sgnn_projection_pipeline(T=80, d=14, sgnn_training_data=None):
 
     if sgnn_training_data is None:
         # print("Warning: you may want to pass in more data to the function `get_sgnn_projection_pipeline()`")
-        with open("./src/data/How-to-Grow-Neat-Software-Architecture-out-of-Jupyter-Notebooks.md") as f:
-            raw_data = f.read()
+        # with open("./src/data/How-to-Grow-Neat-Software-Architecture-out-of-Jupyter-Notebooks.md") as f:
+        #     raw_data = f.read()
         all_possible_0_to_2_grams = " ".join(generate_a_few_char_n_grams())
-        sgnn_training_data = SentenceTokenizer().fit_transform(raw_data + all_possible_0_to_2_grams)
+        # sgnn_training_data = SentenceTokenizer().fit_transform(raw_data + all_possible_0_to_2_grams)
+        sgnn_training_data = SentenceTokenizer().fit_transform(all_possible_0_to_2_grams)
 
     pipeline.fit(sgnn_training_data)
 

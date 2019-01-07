@@ -15,7 +15,7 @@ def test_can_train_one_epoch_of_one_step():
     epoch_model_name = MY_MODEL_NAME + ".epoch_{}" + model_suffix
     success = False
     try:
-        model_trainer = train_model_on_data(
+        preproc_sgnn_sklearn_pipeline, model_trainer = train_model_on_data(
             max_epoch, train_iters_per_epoch,
             preproc_sgnn_sklearn_pipeline=None,
             model_trainer=None,
@@ -42,7 +42,7 @@ def test_can_train_one_epoch_of_one_step_on_GPU():
     epoch_model_name = MY_MODEL_NAME + ".epoch_{}" + model_suffix
     success = False
     try:
-        model_trainer = train_model_on_data(
+        preproc_sgnn_sklearn_pipeline, model_trainer = train_model_on_data(
             max_epoch, train_iters_per_epoch,
             preproc_sgnn_sklearn_pipeline=None,
             model_trainer=None,
@@ -59,4 +59,4 @@ def test_can_train_one_epoch_of_one_step_on_GPU():
 
 
 if __name__ == '__main__':
-    pytest.main()
+    pytest.main([__file__])
