@@ -154,14 +154,26 @@ def generate_a_few_char_n_grams():
 def get_sgnn_projection_pipeline(T=80, d=14, sgnn_training_data=None):
     params = dict()
     params.update(char_term_frequency_params)
-    params.update(hashing_feature_union_params)
+    # params.update(hashing_feature_union_params)
+    params.update({
+        'union__sparse_random_projection_hasher__n_components': 1120,
+        'union__sparse_random_projection_hasher__dense_output': False,
+        'union__sparse_random_projection_hasher__random_state': 42
+    })
 
-    pipeline = Pipeline([
+    _ = """pipeline = Pipeline([
         ("word_tokenizer", WordTokenizer()),
         ("char_term_frequency", CountVectorizer3D()),
         ('union', FeatureUnion3D([
             ('sparse_random_projection_hasher_{}'.format(t), SparseRandomProjection())
             for t in range(T)
+        ]))
+    ])"""
+    pipeline = Pipeline([
+        ("word_tokenizer", WordTokenizer()),
+        ("char_term_frequency", CountVectorizer3D()),
+        ('union', FeatureUnion3D([
+            ('sparse_random_projection_hasher', SparseRandomProjection())
         ]))
     ])
     pipeline.set_params(**params)

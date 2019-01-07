@@ -104,7 +104,8 @@ def categories_to_block_matrix(category_per_sentence):
 def loss_block_matrix_xent(prediction, target):
     prediction = prediction / 2.0 + 0.5
     prediction = prediction.clamp(0, 1)
-    return F.binary_cross_entropy(prediction, target, reduce=False).mean()
+    scaling_factor = 128
+    return F.binary_cross_entropy(prediction, target, reduce=False).mean() * scaling_factor
 
 
 class TrainerModel(torch.nn.Module):
