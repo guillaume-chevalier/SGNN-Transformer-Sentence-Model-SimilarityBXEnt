@@ -127,7 +127,7 @@ class FeatureUnion3D(FeatureUnion):
 
 
 def generate_a_few_char_n_grams():
-    all_possible_0_to_3_grams = ["\n"]
+    all_possible_0_to_3_grams = [" "]
     less_printable = list(set(string.printable) - set(string.digits) - {" "})
     for a in less_printable:
         all_possible_0_to_3_grams.append(a)

@@ -30,6 +30,8 @@ def load_model(model_name=MY_MODEL_NAME, cuda_device_id=None):
     sentence_projection_model = torch.load(b)
     if cuda_device_id is not None:
         sentence_projection_model = sentence_projection_model.cuda(cuda_device_id)
+    else:
+        sentence_projection_model = sentence_projection_model.cpu()
     print("Loaded model from files:", a, b)
     return preproc_sgnn_sklearn_pipeline, sentence_projection_model
 

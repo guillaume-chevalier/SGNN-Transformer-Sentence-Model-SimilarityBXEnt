@@ -118,7 +118,7 @@ def run_epoch(epoch, model_trainer, model_opt, data_batch_iterator, cuda_device_
     total_tokens = 0
     total_loss = 0
     mod_tokens = 0
-    mod = 1  # TODO
+    mod = 240
 
     for i, (src, mask, category_per_sentence) in enumerate(data_batch_iterator):
         target_diagonal_block_matrix = categories_to_block_matrix(category_per_sentence)
@@ -141,7 +141,7 @@ def run_epoch(epoch, model_trainer, model_opt, data_batch_iterator, cuda_device_
             model_opt.optimizer.zero_grad()
 
         # log.
-        if (i - 1) % mod == 0:
+        if (i + 1) % mod == 0:
             elapsed = time.time() - start
             print("Epoch %d Step: %d Loss: %f Tokens per Sec: %f" %
                   (epoch, i, loss / ntokens, mod_tokens / elapsed))
@@ -209,11 +209,12 @@ def train_model_on_data(
         )
 
         model_trainer.eval()
-        run_epoch(
-            epoch, model_trainer, model_opt,
-            DataBatchIterator(preproc_sgnn_sklearn_pipeline, max_iters=1, batch_size=batch_size),
-            cuda_device_id
-        )
+        # TODO: dev set?
+        # run_epoch(
+        #     epoch, model_trainer, model_opt,
+        #     DataBatchIterator(preproc_sgnn_sklearn_pipeline, max_iters=1, batch_size=batch_size),
+        #     cuda_device_id
+        # )
         this_epoch_model_name = epoch_model_name.format("{}", str(epoch).rjust(5, "0"))
         save_model(preproc_sgnn_sklearn_pipeline, sentence_projection_model, this_epoch_model_name)
 
